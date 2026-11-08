@@ -18,7 +18,7 @@
 | SLI | Share of HTTP requests that do not return 5xx |
 | Objective | 99.5% |
 | Window | 30 days, rolling |
-| Error budget | 0.5% of requests, equal to **216 minutes** of total outage per 30 days |
+| Error budget | 0.5% of requests. At constant traffic that is about **216 minutes** of total outage per 30 days; an outage at peak traffic uses it faster. |
 
 SLI PromQL (error ratio). The metric name is not confirmed yet (TODO: confirm metric name):
 

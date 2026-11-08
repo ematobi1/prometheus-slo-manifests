@@ -10,7 +10,7 @@ Blameless. Focus on systems and processes, not people.
 | Services | |
 | Severity | page / ticket |
 | Duration | start (UTC) to end (UTC) |
-| Error budget consumed | % of 30-day budget (from `slo:period_error_budget_remaining:ratio` before and after) |
+| Error budget consumed | % of 30-day budget: failed requests during the incident divided by (error budget ratio x total requests over 30 days). Do not subtract budget-remaining readings; the rolling window also drops old errors. |
 
 ## Summary
 
