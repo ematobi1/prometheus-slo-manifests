@@ -22,13 +22,14 @@ jobs:
 
       - name: Install sloth
         run: |
-          curl -sSfL -o /usr/local/bin/sloth \
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 -o /usr/local/bin/sloth \
             "https://github.com/slok/sloth/releases/download/${SLOTH_VERSION}/sloth-linux-amd64"
           chmod +x /usr/local/bin/sloth
 
       - name: Install promtool
         run: |
-          curl -sSfL "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz" \
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 \
+            "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz" \
             | tar -xz --strip-components=1 -C /usr/local/bin "prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool"
 
       - name: Lint, validate, generate, check rules
