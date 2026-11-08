@@ -1,0 +1,40 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  SLOTH_VERSION: "v0.16.0"
+  PROMETHEUS_VERSION: "3.7.3"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install --quiet yamllint
+
+      - name: Install sloth
+        run: |
+          curl -sSfL -o /usr/local/bin/sloth \
+            "https://github.com/slok/sloth/releases/download/${SLOTH_VERSION}/sloth-linux-amd64"
+          chmod +x /usr/local/bin/sloth
+
+      - name: Install promtool
+        run: |
+          curl -sSfL "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz" \
+            | tar -xz --strip-components=1 -C /usr/local/bin "prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool"
+
+      - name: Lint, validate, generate, check rules
+        run: ./scripts/check.sh
+
+      - name: Fail if generated/ is stale
+        run: |
+          git add --intent-to-add generated
+          git diff --exit-code -- generated
