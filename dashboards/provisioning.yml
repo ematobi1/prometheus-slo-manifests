@@ -1,0 +1,18 @@
+# Example Grafana dashboard provider.
+# Copy to /etc/grafana/provisioning/dashboards/hotel-key-slos.yml and mount
+# this repo's dashboards/ directory at /var/lib/grafana/dashboards/hotel-key-slos.
+# The dashboard picks its Prometheus datasource through the DS_PROMETHEUS variable,
+# so no datasource UID needs to match.
+apiVersion: 1
+
+providers:
+  - name: hotel-key-slos
+    orgId: 1
+    folder: SLOs
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: /var/lib/grafana/dashboards/hotel-key-slos
+      foldersFromFilesStructure: false

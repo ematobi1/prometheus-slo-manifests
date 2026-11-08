@@ -1,0 +1,333 @@
+{
+  "id": null,
+  "uid": "hk-slo-overview",
+  "title": "Hotel Key SLO overview",
+  "description": "Sloth SLOs for Hotel Key services. Source: https://github.com/ematobi1/prometheus-slo-manifests",
+  "tags": ["slo", "sloth", "hotel-key"],
+  "timezone": "utc",
+  "editable": true,
+  "graphTooltip": 1,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-7d", "to": "now" },
+  "links": [
+    {
+      "title": "Runbooks",
+      "type": "link",
+      "url": "https://github.com/ematobi1/prometheus-slo-manifests/tree/main/docs/runbooks",
+      "targetBlank": true,
+      "icon": "doc"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0,
+        "refresh": 1,
+        "regex": "",
+        "options": []
+      },
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "definition": "label_values(sloth_slo_info, sloth_service)",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(sloth_slo_info, sloth_service)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "current": {},
+        "includeAll": true,
+        "multi": true,
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0,
+        "regex": "",
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "name": "Firing SLO alerts",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "expr": "ALERTS{alertstate=\"firing\", sloth_service=~\"$service\"}",
+        "step": "60s",
+        "titleFormat": "{{alertname}} ({{sloth_severity}})",
+        "textFormat": "{{sloth_service}} / {{sloth_slo}}",
+        "tagKeys": "sloth_service,sloth_severity",
+        "useValueForTime": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "SLI (1h window) vs objective",
+      "description": "Share of good requests over a 1h rolling window. Dashed line is the SLO objective.",
+      "gridPos": { "x": 0, "y": 0, "w": 16, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "1 - max by (sloth_service, sloth_slo) (slo:sli_error:ratio_rate1h{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "max by (sloth_service, sloth_slo) (slo:objective:ratio{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}} objective"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 3,
+          "max": 1,
+          "custom": { "lineWidth": 2, "fillOpacity": 0, "showPoints": "never" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byFrameRefID", "options": "B" },
+            "properties": [
+              { "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } },
+              { "id": "custom.lineWidth", "value": 1 }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "min"] },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error budget remaining (30d)",
+      "description": "Share of the 30-day error budget not yet consumed. See docs/error-budget-policy.md for the actions at each level.",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 * max by (sloth_service, sloth_slo) (slo:period_error_budget_remaining:ratio{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0 },
+              { "color": "yellow", "value": 25 },
+              { "color": "green", "value": 50 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "orientation": "horizontal",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Error budget remaining over time (30d)",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 * max by (sloth_service, sloth_slo) (slo:period_error_budget_remaining:ratio{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "thresholdsStyle": { "mode": "dashed" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0 },
+              { "color": "yellow", "value": 25 },
+              { "color": "green", "value": 50 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Burn rate 1h (page at 14.4x)",
+      "description": "Error ratio over 1h divided by the error budget. Page alert fires when 1h and 5m both exceed 14.4x.",
+      "gridPos": { "x": 0, "y": 17, "w": 8, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "max by (sloth_service, sloth_slo) (slo:sli_error:ratio_rate1h{sloth_service=~\"$service\"}) / max by (sloth_service, sloth_slo) (slo:error_budget:ratio{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "x",
+          "decimals": 2,
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 14.4 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Burn rate 6h (page at 6x)",
+      "description": "Error ratio over 6h divided by the error budget. Page alert fires when 6h and 30m both exceed 6x.",
+      "gridPos": { "x": 8, "y": 17, "w": 8, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "max by (sloth_service, sloth_slo) (slo:sli_error:ratio_rate6h{sloth_service=~\"$service\"}) / max by (sloth_service, sloth_slo) (slo:error_budget:ratio{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "x",
+          "decimals": 2,
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 6 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Burn rate 3d (ticket at 1x)",
+      "description": "Error ratio over 3d divided by the error budget. Ticket alert fires when 3d and 6h both exceed 1x.",
+      "gridPos": { "x": 16, "y": 17, "w": 8, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "max by (sloth_service, sloth_slo) (slo:sli_error:ratio_rate3d{sloth_service=~\"$service\"}) / max by (sloth_service, sloth_slo) (slo:error_budget:ratio{sloth_service=~\"$service\"})",
+          "legendFormat": "{{sloth_service}} / {{sloth_slo}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "x",
+          "decimals": 2,
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    }
+  ]
+}

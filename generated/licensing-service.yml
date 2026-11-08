@@ -191,8 +191,8 @@ groups:
       severity: critical
       sloth_severity: page
     annotations:
-      dashboard: https://grafana.example.com/d/licensing-service
-      runbook: https://runbooks.example.com/licensing-service
+      dashboard: https://github.com/ematobi1/prometheus-slo-manifests/blob/main/dashboards/slo-overview.json
+      runbook_url: https://github.com/ematobi1/prometheus-slo-manifests/blob/main/docs/runbooks/licensing-service.md
       summary: licensing-service is burning its availability error budget
       title: (page) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget
         burn rate is too fast.
@@ -214,8 +214,8 @@ groups:
       severity: warning
       sloth_severity: ticket
     annotations:
-      dashboard: https://grafana.example.com/d/licensing-service
-      runbook: https://runbooks.example.com/licensing-service
+      dashboard: https://github.com/ematobi1/prometheus-slo-manifests/blob/main/dashboards/slo-overview.json
+      runbook_url: https://github.com/ematobi1/prometheus-slo-manifests/blob/main/docs/runbooks/licensing-service.md
       summary: licensing-service is burning its availability error budget
       title: (ticket) {{$labels.sloth_service}} {{$labels.sloth_slo}} SLO error budget
         burn rate is too fast.
