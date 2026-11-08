@@ -17,8 +17,8 @@ slos:
         category: "availability"
       annotations:
         summary: "reservations-api is burning its availability error budget"
-        dashboard: "https://grafana.example.com/d/reservations-api"  # TODO: set Grafana URL
-        runbook: "https://runbooks.example.com/reservations-api"  # TODO: set runbook URL
+        dashboard: "https://github.com/ematobi1/prometheus-slo-manifests/blob/main/dashboards/slo-overview.json"
+        runbook_url: "https://github.com/ematobi1/prometheus-slo-manifests/blob/main/docs/runbooks/reservations-api.md"
       page_alert:
         labels:
           severity: "critical"
