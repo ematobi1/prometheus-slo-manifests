@@ -32,10 +32,28 @@ jobs:
             "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz" \
             | tar -xz --strip-components=1 -C /usr/local/bin "prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool"
 
-      - name: Lint, validate, generate, check rules
+      - name: Lint, validate, generate, check rules and dashboard JSON
         run: ./scripts/check.sh
 
       - name: Fail if generated/ is stale
         run: |
           git add --intent-to-add generated
           git diff --exit-code -- generated
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Links to this repo's own main branch are excluded: on a PR they point at
+      # files that only exist after merge. Relative links cover the same files.
+      - name: Check markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --include-fragments
+            --max-retries 3
+            --exclude '^https://github\.com/ematobi1/prometheus-slo-manifests/(blob|tree)/'
+            README.md docs
+          fail: true
