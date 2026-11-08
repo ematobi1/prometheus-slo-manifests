@@ -40,6 +40,29 @@ jobs:
           git add --intent-to-add generated
           git diff --exit-code -- generated
 
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start demo stack
+        working-directory: demo
+        run: docker compose up -d --build --wait
+
+      - name: Verify dropdown, burn rates, and alert annotation
+        run: python3 demo/verify.py
+
+      - name: Show container logs on failure
+        if: failure()
+        working-directory: demo
+        run: docker compose logs
+
+      - name: Stop demo stack
+        if: always()
+        working-directory: demo
+        run: docker compose down
+
   links:
     runs-on: ubuntu-latest
     steps:
@@ -55,5 +78,6 @@ jobs:
             --include-fragments
             --max-retries 3
             --exclude '^https://github\.com/ematobi1/prometheus-slo-manifests/(blob|tree)/'
+            --exclude '^http://localhost'
             README.md docs
           fail: true
