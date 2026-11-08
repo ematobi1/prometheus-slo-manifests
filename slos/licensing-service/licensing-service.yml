@@ -1,0 +1,29 @@
+version: "prometheus/v1"
+service: "licensing-service"
+labels:
+  owner: "hotel-key"
+  tier: "2"
+slos:
+  - name: "requests-availability"
+    objective: 99.5
+    description: "Share of licensing-service HTTP requests that do not fail with a 5xx response."
+    sli:
+      events:
+        # TODO: confirm metric name
+        error_query: sum(rate(http_requests_total{service="licensing",code=~"5.."}[{{.window}}]))
+        # TODO: confirm metric name
+        total_query: sum(rate(http_requests_total{service="licensing"}[{{.window}}]))
+    alerting:
+      name: LicensingServiceHighErrorRate
+      labels:
+        category: "availability"
+      annotations:
+        summary: "licensing-service is burning its availability error budget"
+        dashboard: "https://grafana.example.com/d/licensing-service"  # TODO: set Grafana URL
+        runbook: "https://runbooks.example.com/licensing-service"  # TODO: set runbook URL
+      page_alert:
+        labels:
+          severity: "critical"
+      ticket_alert:
+        labels:
+          severity: "warning"

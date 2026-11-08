@@ -1,0 +1,27 @@
+version: "prometheus/v1"
+service: "reservations-api"
+labels:
+  owner: "hotel-key"
+  tier: "1"
+slos:
+  - name: "requests-availability"
+    objective: 99.9
+    description: "Share of reservations-api HTTP requests that do not fail with a 5xx response."
+    sli:
+      events:
+        error_query: sum(rate(http_requests_total{service="reservations",code=~"5.."}[{{.window}}]))
+        total_query: sum(rate(http_requests_total{service="reservations"}[{{.window}}]))
+    alerting:
+      name: ReservationsApiHighErrorRate
+      labels:
+        category: "availability"
+      annotations:
+        summary: "reservations-api is burning its availability error budget"
+        dashboard: "https://grafana.example.com/d/reservations-api"  # TODO: set Grafana URL
+        runbook: "https://runbooks.example.com/reservations-api"  # TODO: set runbook URL
+      page_alert:
+        labels:
+          severity: "critical"
+      ticket_alert:
+        labels:
+          severity: "warning"
