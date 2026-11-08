@@ -14,7 +14,8 @@ docs/error-budget-policy.md      What teams do at each level of remaining error 
 docs/postmortem-template.md      Postmortem template
 dashboards/slo-overview.json     Grafana dashboard (uid hk-slo-overview)
 dashboards/provisioning.yml      Example Grafana provisioning config
-scripts/check.sh                 Lint, validate, generate, check rules and dashboard JSON
+demo/                            docker compose stack: fake exporter, Prometheus, Grafana, verify.py
+scripts/check.sh                 Lint, test, validate, generate, check rules and dashboard JSON
 .github/workflows/validate.yml   CI
 ```
 
@@ -62,6 +63,46 @@ dashboard: "https://grafana.example.internal/d/hk-slo-overview?var-service=<serv
 Replace `https://grafana.example.internal` with the real `GRAFANA_URL` and `<service>` with the
 spec's `service` value. Sloth copies annotations verbatim and does not expand environment
 variables, so write the literal URL. Then run `./scripts/check.sh` and commit the regenerated rules.
+
+## Demo stack
+
+`demo/` runs the whole pipeline on your machine: a fake exporter, Prometheus loading
+`generated/*.yml`, and Grafana provisioned through `dashboards/provisioning.yml`.
+
+```sh
+cd demo
+docker compose up -d --build
+```
+
+- Grafana: http://localhost:3000 (anonymous admin; opens the SLO dashboard)
+- Prometheus: http://localhost:9090 (rules and alerts under Status > Rules and Alerts)
+- Exporter: http://localhost:8000/metrics
+
+The exporter emits `http_requests_total{service, code}` for `reservations` and `licensing`
+at 50 requests per second each, with 0.05% errors by default (`ERROR_RATE`,
+`ERROR_RATE_RESERVATIONS`, `ERROR_RATE_LICENSING`, `REQUESTS_PER_SECOND` in
+`demo/docker-compose.yml`). Change the error rate while it runs:
+
+```sh
+curl -X POST 'http://localhost:8000/error-rate?value=0.2'                       # all services
+curl -X POST 'http://localhost:8000/error-rate?service=licensing&value=0.05'    # one service
+curl http://localhost:8000/error-rate                                           # current rates
+```
+
+At 20% errors the burn-rate panels cross their threshold lines within a few minutes and both
+SLO alerts fire, which shows up as red annotations. Windows longer than the stack's uptime
+are computed from the data available, so the 6h and 3d panels move as fast as the 1h panel
+in the demo.
+
+Check everything automatically (CI runs the same script):
+
+```sh
+python demo/verify.py
+```
+
+It confirms the `service` dropdown lists both services, every burn-rate panel query rises
+above its alert threshold after raising the error rate, and the firing-alert annotation query
+returns page alerts for both services. Stop the stack with `docker compose down`.
 
 ## Running locally
 

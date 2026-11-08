@@ -3,7 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-yamllint slos dashboards .github
+yamllint slos dashboards demo .github
+(cd demo/exporter && "${PYTHON:-python3}" -m unittest --quiet)
 sloth validate --input slos
 rm -rf generated
 mkdir -p generated
